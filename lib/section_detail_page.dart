@@ -107,6 +107,7 @@ class _SectionDetailPageState extends State<SectionDetailPage> {
 
     if (employeeName == null) return;
 
+    // إزالة الموظف من الوردية والقسم الحالي
     final originDocRef = firestore.collection('shifts').doc(widget.shiftName);
     final originDoc = await originDocRef.get();
     if (originDoc.exists) {
@@ -116,6 +117,7 @@ class _SectionDetailPageState extends State<SectionDetailPage> {
       await originDocRef.set({widget.sectionName: originEmployees}, SetOptions(merge: true));
     }
 
+    // إضافة الموظف للقسم والقسم الهدف في الوردية الهدف
     final targetDocRef = firestore.collection('shifts').doc(selectedShift);
     final targetDoc = await targetDocRef.get();
     if (targetDoc.exists) {
