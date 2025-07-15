@@ -1,67 +1,89 @@
 import 'package:flutter/material.dart';
-import 'section_detail_page.dart';
+import 'role_selection_screen.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final void Function(String role, String shift, [String? section]) onLoginSuccess;
 
-  static const List<String> shifts = ['صباح', 'مساء', 'ليل'];
-  static const List<String> sections = [
-    'حرم',
-    'سطح',
-    'سجاد',
-    'ساحات',
-    'رئاسة',
-    'مرافق',
-    'مواقف',
-  ];
+  const HomePage({super.key, required this.onLoginSuccess});
+
+  void _navigateToRoleSelection(BuildContext context, String role) {
+    if (role == 'sector_chief') {
+      // الدخول المباشر لتدفق رئيس القسم
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RoleSelectionScreen(
+            onLoginSuccess: onLoginSuccess,
+            initialRole: 'sector_chief',
+          ),
+        ),
+      );
+    } else {
+      // عرض شاشة اختيار الدور بشكل عادي
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RoleSelectionScreen(
+            onLoginSuccess: onLoginSuccess,
+            initialRole: null,
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('الصفحة الرئيسية - المدير')),
-      body: ListView.builder(
-        itemCount: shifts.length,
-        itemBuilder: (context, index) {
-          final shiftName = shifts[index];
-          return ExpansionTile(
-            title: Center(
-              child: Text(
-                'وردية $shiftName',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-            ),
-            children: sections.map((section) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Center(
-                  child: SizedBox(
-                    width: 250,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SectionDetailPage(
-                              shiftName: shiftName,
-                              sectionName: section,
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text('قسم $section', style: const TextStyle(fontSize: 16)),
-                    ),
-                  ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('الصفحة الرئيسية'),
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 160,
+                  height: 160,
                 ),
-              );
-            }).toList(),
-          );
-        },
+                const SizedBox(height: 30),
+                _buildButton(context, 'مدير', 'manager', Colors.teal),
+                const SizedBox(height: 16),
+                _buildButton(context, 'مهندس', 'engineer', Colors.blue),
+                const SizedBox(height: 16),
+                _buildButton(context, 'منسق', 'coordinator', Colors.purple),
+                const SizedBox(height: 16),
+                _buildButton(context, 'رئيس قسم', 'sector_chief', Colors.green),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButton(BuildContext context, String title, String role, Color color) {
+    return SizedBox(
+      width: 250,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: () => _navigateToRoleSelection(context, role),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 20),
+        ),
       ),
     );
   }

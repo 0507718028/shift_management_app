@@ -20,10 +20,13 @@ class SectionDetailPage extends StatefulWidget {
 class _SectionDetailPageState extends State<SectionDetailPage> {
   final TextEditingController controller = TextEditingController();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
   List<String> employees = [];
 
   final List<String> sections = [
-    'حرم', 'سطح', 'سجاد', 'ساحات', 'رئاسة', 'مرافق', 'مواقف',
+    'حرم', 'سطح', 'سجاد', 'ساحات', 'وكالة', 'مصاحف', 'ممرات',
+    'دورات', 'المحطة المركزية', 'مغسلة السجاد', 'النساء',
+    'الحشرات', 'المختبر', 'البيئة',
   ];
 
   final List<String> shifts = ['صباح', 'مساء', 'ليل'];
@@ -40,6 +43,10 @@ class _SectionDetailPageState extends State<SectionDetailPage> {
     if (data != null && data[widget.sectionName] != null) {
       setState(() {
         employees = List<String>.from(data[widget.sectionName]);
+      });
+    } else {
+      setState(() {
+        employees = [];
       });
     }
   }
@@ -107,7 +114,6 @@ class _SectionDetailPageState extends State<SectionDetailPage> {
 
     if (employeeName == null) return;
 
-    // إزالة الموظف من الوردية والقسم الحالي
     final originDocRef = firestore.collection('shifts').doc(widget.shiftName);
     final originDoc = await originDocRef.get();
     if (originDoc.exists) {
@@ -117,7 +123,6 @@ class _SectionDetailPageState extends State<SectionDetailPage> {
       await originDocRef.set({widget.sectionName: originEmployees}, SetOptions(merge: true));
     }
 
-    // إضافة الموظف للقسم والقسم الهدف في الوردية الهدف
     final targetDocRef = firestore.collection('shifts').doc(selectedShift);
     final targetDoc = await targetDocRef.get();
     if (targetDoc.exists) {
@@ -127,6 +132,8 @@ class _SectionDetailPageState extends State<SectionDetailPage> {
         targetEmployees.add(employeeName);
         await targetDocRef.set({selectedSection: targetEmployees}, SetOptions(merge: true));
       }
+    } else {
+      await targetDocRef.set({selectedSection: [employeeName]});
     }
 
     await fetchData();
@@ -167,7 +174,7 @@ class _SectionDetailPageState extends State<SectionDetailPage> {
     final whatsappUrl = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
 
     if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+      await launchUrl(whatsappUrl);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('لا يمكن فتح واتساب')),
@@ -176,60 +183,71 @@ class _SectionDetailPageState extends State<SectionDetailPage> {
   }
 
   @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('قسم ${widget.sectionName}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.copy),
-            onPressed: copyEmployeesToClipboard,
-            tooltip: 'نسخ الأسماء',
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: shareViaWhatsApp,
-            tooltip: 'مشاركة واتساب',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: 'اسم الموظف',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: addEmployee,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('قسم ${widget.sectionName}'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.copy),
+              onPressed: copyEmployeesToClipboard,
+              tooltip: 'نسخ الأسماء',
+            ),
+            IconButton(
+              icon: const Icon(Icons.share),
+              onPressed: shareViaWhatsApp,
+              tooltip: 'مشاركة واتساب',
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: 'اسم الموظف',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: addEmployee,
+                    tooltip: 'إضافة موظف',
+                  ),
                 ),
               ),
             ),
-          ),
-          ElevatedButton.icon(
-            onPressed: moveEmployee,
-            icon: const Icon(Icons.drive_file_move),
-            label: const Text('نقل موظف بين ورديات وأقسام'),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: employees.length,
-              itemBuilder: (context, index) {
-                final name = employees[index];
-                return ListTile(
-                  title: Text(name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => removeEmployee(name),
-                  ),
-                );
-              },
+            ElevatedButton.icon(
+              onPressed: moveEmployee,
+              icon: const Icon(Icons.drive_file_move),
+              label: const Text('نقل موظف بين ورديات وأقسام'),
             ),
-          ),
-        ],
+            Expanded(
+              child: ListView.builder(
+                itemCount: employees.length,
+                itemBuilder: (context, index) {
+                  final name = employees[index];
+                  return ListTile(
+                    title: Text(name),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => removeEmployee(name),
+                      tooltip: 'حذف الموظف',
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
